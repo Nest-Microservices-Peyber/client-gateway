@@ -7,16 +7,17 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { catchError } from 'rxjs';
 import { OrderPaginationDto, statusDto } from './dto';
 import { PaginationDto } from 'src/common';
+import { NATS_SERVICE } from 'src/config';
 
 
 @Controller('orders')
 export class OrdersController {
   
-  constructor(@Inject('ORDER_SERVICE') private readonly orderClient: ClientProxy) {}
+  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
   async create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderClient.send({cmd: 'createOrder'}, createOrderDto)
+    return this.client.send({cmd: 'createOrder'}, createOrderDto)
     .pipe(
       catchError( err => {throw new RpcException(err)})
    );
@@ -26,7 +27,7 @@ export class OrdersController {
   @Get()
   async findAll(@Query() orderfPaginationDto: OrderPaginationDto) {
     //return orderfPaginationDto;
-    return this.orderClient.send({cmd: 'findAllOrders'},orderfPaginationDto);
+    return this.client.send({cmd: 'findAllOrders'},orderfPaginationDto);
   }
 
   @Get(':status')
@@ -35,7 +36,7 @@ export class OrdersController {
     @Query() paginationDto: PaginationDto
   ) {
     //return {statusDto,paginationDto}
-    return this.orderClient.send({cmd: 'findAllOrders'},{
+    return this.client.send({cmd: 'findAllOrders'},{
       ...paginationDto,
       status: statusDto.status,
     })
@@ -46,7 +47,7 @@ export class OrdersController {
 
   @Get('id/:id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.orderClient.send({cmd: 'findOneOrder'},id)
+    return this.client.send({cmd: 'findOneOrder'},id)
       .pipe(
          catchError( err => {throw new RpcException(err)})
       )
@@ -57,7 +58,7 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string, 
     @Body() statusDto: statusDto,)
      {
-      return this.orderClient.send({cmd: 'changeOrderStatus'}, {
+      return this.client.send({cmd: 'changeOrderStatus'}, {
         id,
         status: statusDto.status
       })
